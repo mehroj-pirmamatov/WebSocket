@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chat Rooms</title>
+</head>
+<body>
+    <h1>WebSocket Chat</h1>
+    <label for="room-name-input">Room name</label><br>
+    <input id="room-name-input" type="text" maxlength="50" autocomplete="off">
+    <button id="room-name-submit" type="button">Enter</button>
+    <p id="room-error" role="alert"></p>
+    <script>
+        const input = document.querySelector('#room-name-input');
+        const error = document.querySelector('#room-error');
+        input.focus();
+        function enterRoom() {
+            const roomName = input.value.trim();
+            if (!/^[a-zA-Z0-9_-]+$/.test(roomName)) {
+                error.textContent = 'Use only letters, numbers, _ or -.';
+                return;
+            }
+            window.location.href = `/chat/${encodeURIComponent(roomName)}/`;
+        }
+        input.addEventListener('keyup', (event) => { if (event.key === 'Enter') enterRoom(); });
+        document.querySelector('#room-name-submit').addEventListener('click', enterRoom);
+    </script>
+</body>
+</html>

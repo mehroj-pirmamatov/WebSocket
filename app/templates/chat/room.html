@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chat Room: {{ room_name }}</title>
+</head>
+<body>
+    <h1>Room: {{ room_name }}</h1>
+    <textarea id="chat-log" cols="100" rows="20" readonly></textarea><br>
+    <input id="chat-message-input" type="text" maxlength="2000" autocomplete="off" disabled>
+    <button id="chat-message-submit" type="button" disabled>Send</button>
+    <p id="chat-status" role="status">Connecting...</p>
+    {{ room_name|json_script:"room-name" }}
+    <script>
+        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+        const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const chatSocket = new WebSocket(`${scheme}://${window.location.host}/ws/chat/${encodeURIComponent(roomName)}/`);
+        const input = document.querySelector('#chat-message-input');
+        const submit = document.querySelector('#chat-message-submit');
+        const status = document.querySelector('#chat-status');
+        const log = document.querySelector('#chat-log');
+        chatSocket.onopen = () => { status.textContent = 'Connected'; input.disabled = false; submit.disabled = false; input.focus(); };
+        chatSocket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.error) { status.textContent = data.error; return; }
+            log.value += `${data.message}\n`;
+            log.scrollTop = log.scrollHeight;
+        };
+        chatSocket.onclose = () => { status.textContent = 'Connection closed'; input.disabled = true; submit.disabled = true; };
+        function sendMessage() {
+            const message = input.value.trim();
+            if (message && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({message}));
+                input.value = '';
+            }
+        }
+        input.addEventListener('keyup', (event) => { if (event.key === 'Enter') sendMessage(); });
+        submit.addEventListener('click', sendMessage);
+    </script>
+</body>
+</html>
